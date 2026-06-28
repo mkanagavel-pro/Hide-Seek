@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Hide & Seek 👀</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       SCREEN 1 · LOBBY
+  ════════════════════════════════════════════════════════════════════ -->
+  <div id="screen-lobby" class="screen active">
+    <div class="lobby-bg">
+      <!-- Animated background trees -->
+      <div class="bg-tree" style="left:8%;top:15%;font-size:3.5rem;animation-delay:0s">🌲</div>
+      <div class="bg-tree" style="left:82%;top:10%;font-size:2.5rem;animation-delay:0.6s">🌳</div>
+      <div class="bg-tree" style="left:5%;top:65%;font-size:2rem;animation-delay:1.2s">🌿</div>
+      <div class="bg-tree" style="left:90%;top:60%;font-size:3rem;animation-delay:0.3s">🌲</div>
+      <div class="bg-tree" style="left:50%;top:80%;font-size:2.5rem;animation-delay:0.9s">🌳</div>
+      <div class="bg-tree" style="left:30%;top:5%;font-size:2rem;animation-delay:1.5s">🍃</div>
+      <div class="bg-tree" style="left:70%;top:75%;font-size:2rem;animation-delay:0.4s">🌿</div>
+    </div>
+
+    <div class="lobby-card">
+      <div class="logo">
+        <span class="logo-eye">👀</span>
+        <h1>Hide & Seek</h1>
+        <p class="tagline">Real-time multiplayer · Up to 4 players</p>
+      </div>
+
+      <div class="name-input-section">
+        <label for="player-name">Your Name</label>
+        <input
+          id="player-name"
+          type="text"
+          maxlength="16"
+          placeholder="Enter your name…"
+          autocomplete="off"
+          spellcheck="false"
+        />
+      </div>
+
+      <div class="lobby-buttons">
+        <button id="btn-create" class="btn btn-primary">
+          <span class="btn-icon">🏠</span> Create Room
+        </button>
+        <div class="divider"><span>or</span></div>
+        <div class="join-row">
+          <input
+            id="room-code-input"
+            type="text"
+            maxlength="6"
+            placeholder="Room code"
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <button id="btn-join" class="btn btn-secondary">
+            <span class="btn-icon">🚪</span> Join
+          </button>
+        </div>
+      </div>
+
+      <div id="lobby-error" class="error-msg hidden"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       SCREEN 2 · WAITING ROOM
+  ════════════════════════════════════════════════════════════════════ -->
+  <div id="screen-waiting" class="screen">
+    <div class="waiting-container">
+      <div class="waiting-header">
+        <h2>Waiting Room</h2>
+        <div class="room-code-display">
+          Room: <span id="display-room-code">------</span>
+          <button id="btn-copy-code" class="btn-copy" title="Copy code">📋</button>
+        </div>
+      </div>
+
+      <div class="players-grid" id="players-list">
+        <!-- Player cards injected by JS -->
+      </div>
+
+      <div class="waiting-info">
+        <span id="player-count">1</span>/4 players · Need at least 2 to start
+      </div>
+
+      <div id="waiting-error" class="error-msg hidden"></div>
+
+      <div class="waiting-actions">
+        <button id="btn-start" class="btn btn-start hidden">
+          🎮 Start Game
+        </button>
+        <p id="waiting-hint" class="hint">Waiting for host to start…</p>
+      </div>
+
+      <button id="btn-leave" class="btn btn-ghost">← Leave Room</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       SCREEN 3 · GAME
+  ════════════════════════════════════════════════════════════════════ -->
+  <div id="screen-game" class="screen">
+
+    <!-- HUD ─────────────────────────────────────────── -->
+    <div id="hud">
+      <div class="hud-left">
+        <div class="hud-role" id="hud-role">🙈 Hider</div>
+        <div class="hud-room">Room: <strong id="hud-room-code"></strong></div>
+      </div>
+      <div class="hud-center">
+        <div class="hud-timer" id="hud-timer">3:00</div>
+        <div class="hud-timer-label">remaining</div>
+      </div>
+      <div class="hud-right">
+        <div class="hud-stat">
+          <span id="hud-hiders-left">—</span>
+          <span class="hud-stat-label">hiders left</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game canvas ──────────────────────────────────── -->
+    <canvas id="game-canvas"></canvas>
+
+    <!-- Role banner (shown at game start) ────────────── -->
+    <div id="role-banner" class="role-banner hidden">
+      <div class="role-banner-inner">
+        <div id="role-banner-icon">🙈</div>
+        <div id="role-banner-text">You are a Hider!</div>
+        <div class="role-banner-sub">Find a good spot to hide…</div>
+      </div>
+    </div>
+
+    <!-- Spectator overlay ───────────────────────────── -->
+    <div id="spectator-overlay" class="hidden">
+      <div class="spectator-msg">
+        <span>👻</span>
+        <p>You've been tagged!</p>
+        <small>Spectating…</small>
+      </div>
+    </div>
+
+    <!-- Mobile touch controls ───────────────────────── -->
+    <div id="touch-controls">
+      <div class="dpad">
+        <button class="dpad-btn" data-dir="up">▲</button>
+        <div class="dpad-middle">
+          <button class="dpad-btn" data-dir="left">◀</button>
+          <button class="dpad-btn" data-dir="right">▶</button>
+        </div>
+        <button class="dpad-btn" data-dir="down">▼</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       SCREEN 4 · GAME OVER
+  ════════════════════════════════════════════════════════════════════ -->
+  <div id="screen-gameover" class="screen">
+    <div class="gameover-card">
+      <div id="gameover-icon" class="gameover-icon">🏆</div>
+      <h2 id="gameover-title">Hiders Win!</h2>
+      <p id="gameover-subtitle">The hiders survived the full 3 minutes!</p>
+
+      <div class="gameover-results" id="gameover-results">
+        <!-- Player result rows injected by JS -->
+      </div>
+
+      <p class="gameover-hint">Returning to lobby in <span id="gameover-countdown">10</span>s…</p>
+    </div>
+  </div>
+
+  <!-- Toast notification -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- Scripts -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/constants.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/renderer.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/sound.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
