@@ -30,32 +30,59 @@ const InputManager = (() => {
     window.addEventListener('keyup', onKeyUp);
 
     // Touch D-pad buttons
-    document.querySelectorAll('.dpad-btn').forEach(btn => {
-      const dir = btn.dataset.dir;
-
-      btn.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        touch[dir] = true;
-        btn.classList.add('pressed');
-      }, { passive: false });
-
-      btn.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        touch[dir] = false;
-        btn.classList.remove('pressed');
-      }, { passive: false });
-
-      btn.addEventListener('touchcancel', () => {
-        touch[dir] = false;
-        btn.classList.remove('pressed');
-      });
-
-      // Mouse fallback for desktop testing with mouse
-      btn.addEventListener('mousedown', () => { touch[dir] = true; });
-      btn.addEventListener('mouseup', () => { touch[dir] = false; });
-      btn.addEventListener('mouseleave', () => { touch[dir] = false; });
-    });
+     initJoystick();
   }
+
+  let joyDX = 0;
+let joyDY = 0;
+
+function initJoystick() {
+
+  const base = document.getElementById("joystick-base");
+  const stick = document.getElementById("joystick-stick");
+
+  if (!base || !stick) return;
+
+  const radius = 35;
+
+  function update(x, y) {
+
+    const rect = base.getBoundingClientRect();
+
+    let dx = x - (rect.left + rect.width / 2);
+    let dy = y - (rect.top + rect.height / 2);
+
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    if (dist > radius) {
+      dx = dx / dist * radius;
+      dy = dy / dist * radius;
+    }
+
+    stick.style.transform = `translate(${dx}px, ${dy}px)`;
+
+    joyDX = dx / radius;
+    joyDY = dy / radius;
+  }
+
+  base.addEventListener("touchstart", e => {
+    update(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive:false });
+
+  base.addEventListener("touchmove", e => {
+    e.preventDefault();
+    update(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive:false });
+
+  function resetStick() {
+    stick.style.transform = "translate(0px,0px)";
+    joyDX = 0;
+    joyDY = 0;
+  }
+
+  base.addEventListener("touchend", resetStick);
+  base.addEventListener("touchcancel", resetStick);
+}
 
   function onKeyDown(e) {
 
@@ -127,36 +154,43 @@ const InputManager = (() => {
    * Returns the current movement vector and direction label.
    * @returns {{ dx: number, dy: number, direction: string, moving: boolean }}
    */
-  function getMovement() {
-    if (!enabled) return { dx: 0, dy: 0, direction: 'down', moving: false };
+ function getMovement() {
+  if (!enabled)
+    return { dx: 0, dy: 0, direction: "down", moving: false };
 
-    const up = keys.up || touch.up;
-    const down = keys.down || touch.down;
-    const left = keys.left || touch.left;
-    const right = keys.right || touch.right;
+  let dx = joyDX;
+  let dy = joyDY;
 
-    let dx = 0, dy = 0;
-    if (up) dy -= 1;
-    if (down) dy += 1;
-    if (left) dx -= 1;
-    if (right) dx += 1;
+  // Keyboard support
+  if (keys.up) dy = -1;
+  if (keys.down) dy = 1;
+  if (keys.left) dx = -1;
+  if (keys.right) dx = 1;
 
-    // Normalize diagonal movement
-    if (dx !== 0 && dy !== 0) {
-      dx *= 0.7071;
-      dy *= 0.7071;
-    }
-
-    let direction = 'down';
-    if (up && !down) direction = 'up';
-    else if (down && !up) direction = 'down';
-    else if (left && !right) direction = 'left';
-    else if (right && !left) direction = 'right';
-
-    const moving = dx !== 0 || dy !== 0;
-    return { dx, dy, direction, moving };
+  // Normalize diagonal movement
+  const len = Math.sqrt(dx * dx + dy * dy);
+  if (len > 1) {
+    dx /= len;
+    dy /= len;
   }
 
+  let direction = "down";
+
+  if (Math.abs(dx) > Math.abs(dy)) {
+    direction = dx > 0 ? "right" : "left";
+  } else if (Math.abs(dy) > 0.1) {
+    direction = dy > 0 ? "down" : "up";
+  }
+
+  const moving = Math.abs(dx) > 0.05 || Math.abs(dy) > 0.05;
+
+  return {
+    dx,
+    dy,
+    direction,
+    moving
+  };
+}
   function setEnabled(val) { enabled = val; }
   function reset() {
     Object.keys(keys).forEach(k => keys[k] = false);

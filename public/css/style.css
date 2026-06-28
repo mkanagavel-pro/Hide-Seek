@@ -632,3 +632,41 @@ input[type="text"]:focus { border-color: var(--lime); }
 @media (hover: none) and (pointer: coarse) {
   #touch-controls { display: flex; }
 }
+
+/* Mobile Joystick */
+
+#touch-controls{
+    position:fixed;
+    left:20px;
+    bottom:20px;
+    z-index:999;
+}
+
+#joystick-container{
+    width:130px;
+    height:130px;
+    touch-action:none;
+}
+
+#joystick-base{
+    position:relative;
+    width:130px;
+    height:130px;
+    border-radius:50%;
+    background:rgba(255,255,255,.15);
+    border:3px solid rgba(255,255,255,.25);
+    backdrop-filter:blur(8px);
+}
+
+#joystick-stick{
+    position:absolute;
+    left:35px;
+    top:35px;
+    width:60px;
+    height:60px;
+    border-radius:50%;
+    background:white;
+    opacity:.9;
+    box-shadow:0 4px 12px rgba(0,0,0,.35);
+    transition:.05s;
+}
