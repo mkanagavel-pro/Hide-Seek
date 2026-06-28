@@ -380,8 +380,9 @@ const Renderer = (() => {
     const icon = role === 'seeker' ? '👁' : (status === 'tagged' ? '💀' : '🙈');
     ctx.font = '13px serif';
     ctx.textAlign = 'center';
-    ctx.fillText(icon, x, y + 5);
-
+    ctx.font = "18px serif";
+    ctx.textAlign = "center";
+    ctx.fillText(icon, x, y - r - 12);
     // Name tag
     drawNameTag(x, y, r, name, isMe, role);
   }
