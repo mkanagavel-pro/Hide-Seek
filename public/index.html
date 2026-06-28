@@ -114,65 +114,67 @@
         </div>
       </div>
     </div>
+  
 
-    <!-- Game canvas ──────────────────────────────────── -->
-    <canvas id="game-canvas"></canvas>
+   <!-- Game canvas ──────────────────────────────────── -->
+   <canvas id="game-canvas"></canvas>
 
-    <!-- Role banner (shown at game start) ────────────── -->
-    <div id="role-banner" class="role-banner hidden">
-      <div class="role-banner-inner">
-        <div id="role-banner-icon">🙈</div>
-        <div id="role-banner-text">You are a Hider!</div>
-        <div class="role-banner-sub">Find a good spot to hide…</div>
+   <!-- Role banner (shown at game start) ────────────── -->
+   <div id="role-banner" class="role-banner hidden">
+    <div class="role-banner-inner">
+      <div id="role-banner-icon">🙈</div>
+      <div id="role-banner-text">You are a Hider!</div>
+      <div class="role-banner-sub">Find a good spot to hide…</div>
+    </div>
+   </div>
+
+   <!-- Spectator overlay ───────────────────────────── -->
+   <div id="spectator-overlay" class="hidden">
+    <div class="spectator-msg">
+      <span>👻</span>
+      <p>You've been tagged!</p>
+      <small>Spectating…</small>
+    </div>
+   </div>
+
+   <div id="touch-controls">
+    <div id="joystick-container">
+      <div id="joystick-base">
+        <div id="joystick-stick"></div>
       </div>
     </div>
-
-    <!-- Spectator overlay ───────────────────────────── -->
-    <div id="spectator-overlay" class="hidden">
-      <div class="spectator-msg">
-        <span>👻</span>
-        <p>You've been tagged!</p>
-        <small>Spectating…</small>
-      </div>
-    </div>
-
-    <div id="touch-controls">
-      <div id="joystick-container">
-        <div id="joystick-base">
-          <div id="joystick-stick"></div>
-        </div>
-      </div>
-    </div>
-    <!-- ═══════════════════════════════════════════════════════════════
+   </div>
+  </div>
+  <!-- ═══════════════════════════════════════════════════════════════
        SCREEN 4 · GAME OVER
   ════════════════════════════════════════════════════════════════════ -->
-    <div id="screen-gameover" class="screen">
-      <div class="gameover-card">
-        <div id="gameover-icon" class="gameover-icon">🏆</div>
-        <h2 id="gameover-title">Hiders Win!</h2>
-        <p id="gameover-subtitle">The hiders survived the full 3 minutes!</p>
+  <div id="screen-gameover" class="screen">
+    <div class="gameover-card">
+      <div id="gameover-icon" class="gameover-icon">🏆</div>
+      <h2 id="gameover-title">Hiders Win!</h2>
+      <p id="gameover-subtitle">The hiders survived the full 3 minutes!</p>
 
-        <div class="gameover-results" id="gameover-results">
-          <!-- Player result rows injected by JS -->
-        </div>
-
-        <p class="gameover-hint">Returning to lobby in <span id="gameover-countdown">10</span>s…</p>
+      <div class="gameover-results" id="gameover-results">
+        <!-- Player result rows injected by JS -->
       </div>
+
+      <p class="gameover-hint">Returning to lobby in <span id="gameover-countdown">10</span>s…</p>
     </div>
+  </div>
 
-    <!-- Toast notification -->
-    <div id="toast" class="toast hidden"></div>
+  <!-- Toast notification -->
+  <div id="toast" class="toast hidden"></div>
 
-    <!-- Scripts -->
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="js/constants.js"></script>
-    <script src="js/map.js"></script>
-    <script src="js/renderer.js"></script>
-    <script src="js/input.js"></script>
-    <script src="js/sound.js"></script>
-    <script src="js/game.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/main.js"></script>
+  <!-- Scripts -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/constants.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/renderer.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/sound.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
 </body>
 
 </html>
