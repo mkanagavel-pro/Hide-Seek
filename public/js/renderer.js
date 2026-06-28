@@ -7,34 +7,56 @@ const Renderer = (() => {
 
   let canvas, ctx;
   let camX = 0, camY = 0;  // camera top-left in world space
+  let mapCanvas;
+  let mapCtx;
 
   const COLORS = {
-    grass:     '#3d7a3a',
+    grass: '#3d7a3a',
     grassDark: '#2d6028',
-    grassLight:'#4a8f46',
-    wall:      '#5c4a3a',
-    wallTop:   '#7a6248',
-    house:     '#c4956a',
+    grassLight: '#4a8f46',
+    wall: '#5c4a3a',
+    wallTop: '#7a6248',
+    house: '#c4956a',
     houseRoof: '#8b3a3a',
     houseDoor: '#5c3a1e',
-    treeCanopy:'#2d6628',
-    treeCanopy2:'#3d7a38',
+    treeCanopy: '#2d6628',
+    treeCanopy2: '#3d7a38',
     treeTrunk: '#7a5c38',
-    rockBody:  '#8a8a8a',
+    rockBody: '#8a8a8a',
     rockShade: '#6a6a6a',
-    rockHigh:  '#aaaaaa',
+    rockHigh: '#aaaaaa',
   };
 
   function init(canvasEl) {
     canvas = canvasEl;
     ctx = canvas.getContext('2d');
+    // Offscreen map
+    mapCanvas = document.createElement("canvas");
+    mapCtx = mapCanvas.getContext("2d");
+
     resize();
     window.addEventListener('resize', resize);
   }
 
   function resize() {
-    canvas.width  = window.innerWidth;
-    canvas.height = window.innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    canvas.style.width = window.innerWidth + "px";
+    canvas.style.height = window.innerHeight + "px";
+
+    canvas.width = Math.floor(window.innerWidth * dpr);
+    canvas.height = Math.floor(window.innerHeight * dpr);
+
+    // Reset transform
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+    // Scale for HiDPI
+    ctx.scale(dpr, dpr);
+
+    // Pixel smoothing
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    buildStaticMap();
   }
 
   /**
@@ -43,32 +65,51 @@ const Renderer = (() => {
    */
   function draw(state) {
     if (!ctx) return;
-    const { players, myId } = state;
 
-    // Update camera to follow local player
+    const { players, myId } = state;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const viewW = canvas.width / dpr;
+    const viewH = canvas.height / dpr;
+
+    // Update camera
     const me = players[myId];
     if (me) {
-      camX = me.x - canvas.width / 2;
-      camY = me.y - canvas.height / 2;
+      camX = me.x - viewW / 2;
+      camY = me.y - viewH / 2;
     }
 
-    // Clamp camera to map bounds
-    camX = Math.max(0, Math.min(CONSTANTS.MAP_WIDTH  - canvas.width,  camX));
-    camY = Math.max(0, Math.min(CONSTANTS.MAP_HEIGHT - canvas.height, camY));
+    // Clamp camera
+    camX = Math.max(0, Math.min(CONSTANTS.MAP_WIDTH - viewW, camX));
+    camY = Math.max(0, Math.min(CONSTANTS.MAP_HEIGHT - viewH, camY));
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     ctx.save();
     ctx.translate(-camX, -camY);
 
-    drawGround();
-    drawGroundPatches();
-    drawObstacles();
+    ctx.drawImage(mapCanvas, 0, 0);
     drawPlayers(players, myId, state.myRole);
 
     ctx.restore();
   }
 
+  function buildStaticMap() {
+
+    mapCanvas.width = CONSTANTS.MAP_WIDTH;
+    mapCanvas.height = CONSTANTS.MAP_HEIGHT;
+
+    mapCtx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
+
+    const old = ctx;
+
+    ctx = mapCtx;
+
+    drawGround();
+    drawGroundPatches();
+    drawObstacles();
+
+    ctx = old;
+  }
   // ─── Ground ───────────────────────────────────────────────────────────────
 
   function drawGround() {
@@ -133,10 +174,10 @@ const Renderer = (() => {
   function drawObstacles() {
     for (const obs of GameMap.OBSTACLES) {
       switch (obs.type) {
-        case 'wall':  drawWall(obs);  break;
+        case 'wall': drawWall(obs); break;
         case 'house': drawHouse(obs); break;
-        case 'tree':  drawTree(obs);  break;
-        case 'rock':  drawRock(obs);  break;
+        case 'tree': drawTree(obs); break;
+        case 'rock': drawRock(obs); break;
       }
     }
   }
@@ -209,7 +250,7 @@ const Renderer = (() => {
   function drawTree(obs) {
     const cx = obs.x + obs.w / 2;
     const cy = obs.y + obs.h / 2;
-    const r  = Math.min(obs.w, obs.h) / 2;
+    const r = Math.min(obs.w, obs.h) / 2;
     // Shadow
     ctx.fillStyle = 'rgba(0,0,0,0.22)';
     ctx.beginPath();
@@ -261,27 +302,39 @@ const Renderer = (() => {
 
   // ─── Players ──────────────────────────────────────────────────────────────
 
-  function drawPlayers(players, myId, myRole) {
+  function drawPlayers(players, myId) {
+
+    const left = camX - 60;
+    const top = camY - 60;
+    const right = camX + canvas.width + 60;
+    const bottom = camY + canvas.height + 60;
+
     for (const [id, player] of Object.entries(players)) {
-      if (player.status === 'waiting') continue;
+
+      if (player.status === "waiting") continue;
+
+      if (
+        player.x < left ||
+        player.x > right ||
+        player.y < top ||
+        player.y > bottom
+      ) {
+        continue;
+      }
 
       const isMe = id === myId;
-      const isTagged = player.status === 'tagged';
-
-      // Seeker fog: hiders can't see seeker's exact position with full opacity if far
-      // (future improvement – for now draw all players)
 
       ctx.save();
 
-      // Fade tagged players
-      if (isTagged) ctx.globalAlpha = 0.4;
+      if (player.status === "tagged") {
+        ctx.globalAlpha = 0.4;
+      }
 
       drawPlayer(player, isMe);
 
       ctx.restore();
     }
   }
-
   function drawPlayer(player, isMe) {
     const { x, y, color, name, role, status, direction } = player;
     const r = CONSTANTS.PLAYER_RADIUS;
@@ -338,11 +391,11 @@ const Renderer = (() => {
     const spread = 5;
     const look = 1.5;
     switch (direction) {
-      case 'up':    return [{ ex: -spread, ey: -d, px: 0, py: -look }, { ex: spread, ey: -d, px: 0, py: -look }];
-      case 'down':  return [{ ex: -spread, ey: d,  px: 0, py: look  }, { ex: spread, ey: d,  px: 0, py: look  }];
-      case 'left':  return [{ ex: -d, ey: -spread, px: -look, py: 0 }, { ex: -d, ey: spread, px: -look, py: 0 }];
-      case 'right': return [{ ex: d,  ey: -spread, px: look, py: 0  }, { ex: d,  ey: spread, px: look, py: 0  }];
-      default:      return [{ ex: -spread, ey: d,  px: 0, py: look  }, { ex: spread, ey: d,  px: 0, py: look  }];
+      case 'up': return [{ ex: -spread, ey: -d, px: 0, py: -look }, { ex: spread, ey: -d, px: 0, py: -look }];
+      case 'down': return [{ ex: -spread, ey: d, px: 0, py: look }, { ex: spread, ey: d, px: 0, py: look }];
+      case 'left': return [{ ex: -d, ey: -spread, px: -look, py: 0 }, { ex: -d, ey: spread, px: -look, py: 0 }];
+      case 'right': return [{ ex: d, ey: -spread, px: look, py: 0 }, { ex: d, ey: spread, px: look, py: 0 }];
+      default: return [{ ex: -spread, ey: d, px: 0, py: look }, { ex: spread, ey: d, px: 0, py: look }];
     }
   }
 
